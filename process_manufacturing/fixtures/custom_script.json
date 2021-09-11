@@ -1,0 +1,24 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Work Order2",
+  "modified": "2021-07-25 23:18:21.337647",
+  "name": "Work Order2-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Work Order2',{\n   'qty_to_manufacture':function(frm){\n          var tabletransfer= frappe.model.get_doc(\"Bill Of Material2\", frm.doc.process_name) \n           $.each(tabletransfer.finished_products, function(index, row){\n                        cur_frm.doc.qty_multiplier=frm.doc.qty_to_manufacture/tabletransfer.finished_products[0].qty\n             })\n\n    },\n  \n   'validate':function(frm){\n          var tabletransfer= frappe.model.get_doc(\"Bill Of Material2\", frm.doc.process_name) \n        $.each(tabletransfer.finished_products, function(index, row){\n            cur_frm.doc.qty_multiplier=frm.doc.qty_to_manufacture/tabletransfer.finished_products[0].qty\n             })\n\n    },\n    process_name(frm) {\n        console.log(\"FFFFFFF\")\n        frappe.model.with_doc(\"Bill Of Material2\",\n        frm.doc.process_name, function() { \n        var tabletransfer= frappe.model.get_doc(\"Bill Of Material2\", frm.doc.process_name) \n        cur_frm.process_type=tabletransfer.process_type \n       \n        cur_frm.refresh_field(\"process_type\"); \n        console.log(cur_frm.process_type)\n        cur_frm.clear_table('materials') \n        cur_frm.clear_table('finished_products') \n        cur_frm.clear_table('scrap') \n        $.each(tabletransfer.materials, function(index, row){\n            var d=frm.add_child(\"materials\"); \n            d.item=row.item \n            d.item_name=row.item_name \n            d.quantity = row.qty;\n           \n            cur_frm.refresh_field(\"materials\"); \n        $.each(tabletransfer.finished_products, function(index, row){ \n            var c=frm.add_child(\"finished_products\");\n            c.item=row.item \n            c.item_name=row.item_name \n            c.quantity = row.qty;\n            c.cost_factor=row.cost_factor\n            //   cur_frm.doc.qty_multiplier=frm.doc.qty_to_manufacture/row[0].qty\n            cur_frm.refresh_field(\"finished_products\"); \n                \n            }) \n            $.each(tabletransfer.scrap, function(index, row){ \n                var e=frm.add_child(\"scrap\");\n                e.item=row.item \n                e.item_name=row.item_name\n                e.quantity = row.qty;\n                cur_frm.refresh_field(\"scrap\");\n                }) }) });\n                },\n                validate(frm){\n                    frm.doc.finished_products[0].qty=frm.doc.qty_to_manufacture\n                    frm.doc.finished_products[1].qty=frm.doc.qty_to_manufacture/frm.doc.finished_products[0].quantity*frm.doc.finished_products[1].quantity \n                    frm.doc.scrap[0].qty=frm.doc.qty_to_manufacture/frm.doc.finished_products[0].quantity*frm.doc.scrap[0].quantity \n                    for(var x in frm.doc.materials){ \n                    console.log(frm.doc.finished_products[0].qty)\n                    frm.doc.materials[0].qty=frm.doc.qty_to_manufacture/frm.doc.finished_products[0].quantity* frm.doc.materials[0].quantity \n                    } \n                    } \n    \n})\n"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Custom Script",
+  "dt": "Stock Entry",
+  "modified": "2021-07-25 22:55:30.203766",
+  "name": "Stock Entry-Client",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "script": "frappe.ui.form.on('Stock Entry', {\n     after_save(frm) {\n          if(frm.doc.stock_entry_type=='Process Manufacture'){\n        frm.set_value('stock_entry_multiplier',frm.doc.total_outgoing_value/(frm.doc.total_cost_factor*frm.doc.total_qty_multiplier))\n       \n         frm.doc.items.forEach(function (d) {\n            \n             if(d.s_warehouse === undefined) {\n              d.set_basic_rate_manually=1\n              d.basic_rate=d.cost_factor*frm.doc.stock_entry_multiplier\n            //   frm.refresh_field(\"\")\n       \n              if (d.cost_factor === 0) {d.allow_zero_valuation_rate = 1}\n          }})\n    frm.refresh_fields()\n        }\n             \n}\n})\n"
+ }
+]
